@@ -1,0 +1,11 @@
+--- ./src/ftp.cc	2013-04-30 06:47:06.000000000 +0200
++++ ./src/ftp.cc	2013-07-04 14:42:06.000000000 +0200
+@@ -2555,7 +2555,7 @@
+     /** \par
+       * Checks for previous EPSV/PASV failures on this server/session.
+       * Diverts to EPRT immediately if they are not working. */
+-    if (!ftpState->flags.pasv_supported) {
++    if (!ftpState->flags.pasv_supported && Config.Ftp.passive) {
+         ftpSendEPRT(ftpState);
+         return;
+     }

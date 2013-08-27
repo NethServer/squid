@@ -1,0 +1,36 @@
+diff -up squid-3.2.0.9/compat/Makefile.in.fpic squid-3.2.0.9/compat/Makefile.in
+--- squid-3.2.0.9/compat/Makefile.in.fpic	2011-07-01 11:38:35.332618191 +0200
++++ squid-3.2.0.9/compat/Makefile.in	2011-07-01 11:41:07.207345197 +0200
+@@ -321,7 +321,7 @@ target_alias = @target_alias@
+ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+-AM_CFLAGS = $(SQUID_CFLAGS)
++AM_CFLAGS = $(SQUID_CFLAGS) -fPIC
+ AM_CXXFLAGS = $(SQUID_CXXFLAGS)
+ CLEANFILES = testHeaders
+ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/lib \
+diff -up squid-3.2.0.9/snmplib/Makefile.am.fpic squid-3.2.0.9/snmplib/Makefile.am
+--- squid-3.2.0.9/snmplib/Makefile.am.fpic	2011-07-01 11:40:12.557741046 +0200
++++ squid-3.2.0.9/snmplib/Makefile.am	2011-07-01 11:41:10.201378312 +0200
+@@ -2,7 +2,7 @@
+ ##
+ ## Makefile for libsnmp.
+ ## 
+-AM_CFLAGS = $(SQUID_CFLAGS)
++AM_CFLAGS = $(SQUID_CFLAGS) -fPIC
+ AM_CXXFLAGS = $(SQUID_CXXFLAGS)
+ noinst_LIBRARIES = libsnmplib.a
+ libsnmplib_a_SOURCES  = asn1.c parse.c snmp_vars.c \
+diff -up squid-3.2.0.9/snmplib/Makefile.in.fpic squid-3.2.0.9/snmplib/Makefile.in
+--- squid-3.2.0.9/snmplib/Makefile.in.fpic	2011-07-01 12:04:44.083181152 +0200
++++ squid-3.2.0.9/snmplib/Makefile.in	2011-07-01 12:05:06.796437407 +0200
+@@ -290,7 +290,7 @@ target_alias = @target_alias@
+ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+-AM_CFLAGS = $(SQUID_CFLAGS)
++AM_CFLAGS = $(SQUID_CFLAGS) -fPIC
+ AM_CXXFLAGS = $(SQUID_CXXFLAGS)
+ noinst_LIBRARIES = libsnmplib.a
+ libsnmplib_a_SOURCES = asn1.c parse.c snmp_vars.c \
