@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.3.8
-Release:  2%{?dist}
+Release:  11%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -39,6 +39,11 @@ Patch204: squid-3.2.0.9-fpic.patch
 Patch205: squid-3.1.9-ltdl.patch
 Patch206: squid-3.3.4-empty-pod2man.patch
 Patch207: active-ftp.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=980511
+Patch208: squid-3.3.8-active-ftp-2.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1074873
+# http://www.squid-cache.org/Advisories/SQUID-2014_1.txt
+Patch209: squid-3.3-12677.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -56,8 +61,6 @@ BuildRequires: pam-devel
 BuildRequires: openssl-devel
 # squid_kerb_aut requires Kerberos development libs
 BuildRequires: krb5-devel
-# squid_session_auth requires DB4
-BuildRequires: db4-devel
 # ESI support requires Expat & libxml2
 BuildRequires: expat-devel libxml2-devel
 # TPROXY requires libcap, and also increases security somewhat
@@ -68,6 +71,8 @@ BuildRequires: libecap-devel
 BuildRequires: libtool libtool-ltdl-devel
 # For test suite
 BuildRequires: cppunit-devel
+# DB helper requires
+BuildRequires: perl-podlators libdb-devel
 
 %description
 Squid is a high-performance proxy caching server for Web clients,
@@ -108,6 +113,8 @@ The squid-sysvinit contains SysV initscritps support.
 %patch205 -p1 -b .ltdl
 %patch206 -p1 -b .empty-pod2man
 %patch207 -p1 -b .active-ftp
+%patch208 -p1 -b .active-ftp-2
+%patch209 -p0
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -136,14 +143,14 @@ LDFLAGS="$RPM_LD_FLAGS -pie -Wl,-z,relro -Wl,-z,now"
    --enable-auth-ntlm="smb_lm,fake" \
    --enable-auth-digest="file,LDAP,eDirectory" \
    --enable-auth-negotiate="kerberos" \
-   --enable-external-acl-helpers="ip_user,ldap_group,session,unix_group,wbinfo_group" \
+   --enable-external-acl-helpers="file_userip,LDAP_group,time_quota,session,unix_group,wbinfo_group" \
    --enable-cache-digests \
    --enable-cachemgr-hostname=localhost \
    --enable-delay-pools \
    --enable-epoll \
    --enable-icap-client \
    --enable-ident-lookups \
-   %ifnarch ppc64 ia64 x86_64 s390x
+   %ifnarch ppc64 ia64 x86_64 s390x aarch64
    --with-large-files \
    %endif
    --enable-linux-netfilter \
@@ -312,6 +319,34 @@ fi
         /sbin/chkconfig --add squid >/dev/null 2>&1 || :
 
 %changelog
+* Mon Mar 17 2014 Pavel Šimerda <psimerda@redhat.com> - 7:3.3.8-11
+- Resolves: #1074873 - CVE-2014-0128 squid: denial of service when using
+  SSL-Bump
+
+* Wed Mar 05 2014 Pavel Šimerda <psimerda@redhat.com>' - 7:3.3.8-10
+- Resolves: #1072973 - don't depend on libdb4
+
+* Tue Feb 11 2014 Pavel Šimerda <psimerda@redhat.com> - 7:3.3.8-9
+- revert: Resolves: #1038160 - avoid running squid's own supervisor process
+
+* Tue Feb 11 2014 Pavel Šimerda <psimerda@redhat.com> - 7:3.3.8-8
+- Resolves: #1063248 - missing helpers
+
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 7:3.3.8-7
+- Mass rebuild 2014-01-24
+
+* Thu Jan 02 2014 Pavel Šimerda <psimerda@redhat.com> - 7:3.3.8-6
+- Resolves: #980511 - squid doesn't work with active FTP
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 7:3.3.8-5
+- Mass rebuild 2013-12-27
+
+* Tue Dec 10 2013 Pavel Šimerda <psimerda@redhat.com> - 7:3.3.8-4
+- Resolves: #1038160 - avoid running squid's own supervisor process
+
+* Thu Nov 21 2013 Pavel Šimerda <psimerda@redhat.com> - 7:3.3.8-3
+- Resolves: #1028588 - fix build on aarch64
+
 * Tue Aug 27 2013 Michal Luscon <mluscon@redhat.com> - 7:3.3.8-2
 - Fixed: source code url
 
