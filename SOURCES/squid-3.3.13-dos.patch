@@ -1,0 +1,54 @@
+------------------------------------------------------------
+revno: 12680
+revision-id: squid3@treenet.co.nz-20140827135054-gocmdaazdumj5e2e
+parent: squid3@treenet.co.nz-20140520164322-out2c9fak6sb2u4x
+committer: Amos Jeffries <squid3@treenet.co.nz>
+branch nick: 3.3
+timestamp: Wed 2014-08-27 07:50:54 -0600
+message:
+  Ignore Range headers with unidentifiable byte-range values
+  
+  If squid is unable to determine the byte value for ranges, treat the
+  header as invalid.
+------------------------------------------------------------
+# Bazaar merge directive format 2 (Bazaar 0.90)
+# revision_id: squid3@treenet.co.nz-20140827135054-gocmdaazdumj5e2e
+# target_branch: http://bzr.squid-cache.org/bzr/squid3/3.3
+# testament_sha1: 5518d5baca6f4327b40368e98fe8d9c36831fa1a
+# timestamp: 2014-08-27 13:53:27 +0000
+# source_branch: http://bzr.squid-cache.org/bzr/squid3/3.3
+# base_revision_id: squid3@treenet.co.nz-20140520164322-\
+#   out2c9fak6sb2u4x
+# 
+# Begin patch
+=== modified file 'src/HttpHdrRange.cc'
+--- src/HttpHdrRange.cc 2013-01-02 03:44:55 +0000
++++ src/HttpHdrRange.cc 2014-08-27 13:50:54 +0000
+@@ -92,7 +92,7 @@
+ 
+     /* is it a suffix-byte-range-spec ? */
+     if (*field == '-') {
+-        if (!httpHeaderParseOffset(field + 1, &length))
++        if (!httpHeaderParseOffset(field + 1, &length) || !known_spec(length))
+             return false;
+     } else
+         /* must have a '-' somewhere in _this_ field */
+@@ -100,7 +100,7 @@
+             debugs(64, 2, "invalid (missing '-') range-spec near: '" << field << "'");
+             return false;
+         } else {
+-            if (!httpHeaderParseOffset(field, &offset))
++            if (!httpHeaderParseOffset(field, &offset) || !known_spec(offset))
+                 return false;
+ 
+             ++p;
+@@ -109,7 +109,7 @@
+             if (p - field < flen) {
+                 int64_t last_pos;
+ 
+-                if (!httpHeaderParseOffset(p, &last_pos))
++                if (!httpHeaderParseOffset(p, &last_pos) || !known_spec(last_pos))
+                     return false;
+ 
+                 // RFC 2616 s14.35.1 MUST: last-byte-pos >= first-byte-pos
+

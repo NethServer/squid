@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.3.8
-Release:  11%{?dist}
+Release:  12%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -44,6 +44,7 @@ Patch208: squid-3.3.8-active-ftp-2.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1074873
 # http://www.squid-cache.org/Advisories/SQUID-2014_1.txt
 Patch209: squid-3.3-12677.patch
+Patch210: squid-3.3.13-dos.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -115,6 +116,7 @@ The squid-sysvinit contains SysV initscritps support.
 %patch207 -p1 -b .active-ftp
 %patch208 -p1 -b .active-ftp-2
 %patch209 -p0
+%patch210 -p0
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -319,6 +321,9 @@ fi
         /sbin/chkconfig --add squid >/dev/null 2>&1 || :
 
 %changelog
+* Fri Aug 29 2014 Michal Luscon <mluscon@redhat.com> - 7:3.3.8-12
+- Resolves: #1134933 - CVE-2014-3609 assertion failure in header processing
+
 * Mon Mar 17 2014 Pavel Šimerda <psimerda@redhat.com> - 7:3.3.8-11
 - Resolves: #1074873 - CVE-2014-0128 squid: denial of service when using
   SSL-Bump
