@@ -1,0 +1,63 @@
+diff -Naurp squid-3.3.8.orig/src/client_side_reply.cc squid-3.3.8/src/client_side_reply.cc
+--- squid-3.3.8.orig/src/client_side_reply.cc	2015-04-22 13:38:31.000000000 +0200
++++ squid-3.3.8/src/client_side_reply.cc	2015-04-22 13:42:29.332950760 +0200
+@@ -506,6 +506,7 @@ clientReplyContext::cacheHit(StoreIOBuff
+ 
+     if (strcmp(e->mem_obj->url, urlCanonical(r)) != 0) {
+         debugs(33, DBG_IMPORTANT, "clientProcessHit: URL mismatch, '" << e->mem_obj->url << "' != '" << urlCanonical(r) << "'");
++        http->logType = LOG_TCP_MISS; // we lack a more precise LOG_*_MISS code
+         processMiss();
+         return;
+     }
+@@ -537,6 +538,7 @@ clientReplyContext::cacheHit(StoreIOBuff
+     case VARY_CANCEL:
+         /* varyEvaluateMatch found a object loop. Process as miss */
+         debugs(88, DBG_IMPORTANT, "clientProcessHit: Vary object loop!");
++        http->logType = LOG_TCP_MISS; // we lack a more precise LOG_*_MISS code
+         processMiss();
+         return;
+     }
+diff -Naurp squid-3.3.8.orig/src/MemStore.cc squid-3.3.8/src/MemStore.cc
+--- squid-3.3.8.orig/src/MemStore.cc	2013-07-13 15:25:14.000000000 +0200
++++ squid-3.3.8/src/MemStore.cc	2015-04-22 13:25:35.879901955 +0200
+@@ -310,6 +310,12 @@ MemStore::considerKeeping(StoreEntry &e)
+         return;
+     }
+ 
++    if (e.mem_obj->vary_headers) {
++        // XXX: We must store/load SerialisedMetaData to cache Vary in RAM
++        debugs(20, 5, "Vary not yet supported: " << e.mem_obj->vary_headers);
++        return;
++    }
++
+     keep(e); // may still fail
+ }
+ 
+diff -Naurp squid-3.3.8.orig/src/store.cc squid-3.3.8/src/store.cc
+--- squid-3.3.8.orig/src/store.cc	2013-07-13 15:25:14.000000000 +0200
++++ squid-3.3.8/src/store.cc	2015-04-22 13:43:44.675657018 +0200
+@@ -761,7 +761,7 @@ StoreEntry::setPublicKey()
+             StoreEntry *pe = storeCreateEntry(mem_obj->url, mem_obj->log_url, request->flags, request->method);
+             /* We are allowed to do this typecast */
+             HttpReply *rep = new HttpReply;
+-            rep->setHeaders(HTTP_OK, "Internal marker object", "x-squid-internal/vary", -1, -1, squid_curtime + 100000);
++            rep->setHeaders(HTTP_OK, "Internal marker object", "x-squid-internal/vary", 0, -1, squid_curtime + 100000);
+             vary = mem_obj->getReply()->header.getList(HDR_VARY);
+ 
+             if (vary.size()) {
+@@ -780,12 +780,13 @@ StoreEntry::setPublicKey()
+             }
+ 
+ #endif
+-            pe->replaceHttpReply(rep);
+-
++            pe->replaceHttpReply(rep, false); // no write until key is public
+             pe->timestampsSet();
+ 
+             pe->makePublic();
+ 
++            pe->startWriting(); // after makePublic()
++
+             pe->complete();
+ 
+             pe->unlock();

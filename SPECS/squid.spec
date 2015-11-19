@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.3.8
-Release:  12%{?dist}
+Release:  26%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -20,6 +20,7 @@ Source5:  squid.pam
 Source6:  squid.nm
 Source7:  squid.service
 Source8:  cache_swap.sh
+Source9:  squid.xml
 Source98: perl-requires-squid.sh
 ## Source99: filter-requires-squid.sh
 
@@ -27,7 +28,7 @@ Source98: perl-requires-squid.sh
 #Patch001: http://www.squid-cache.org/Versions/v3/3.2/changesets/squid-3.2-11480.patch
 
 # Backported patches
-#Patch101: squid-3.2-mem_node.patch
+# Patch211: squid-3.3.8-incorrect-ssl.patch
 
 # Local patches
 # Applying upstream patches first makes it less likely that local patches
@@ -45,6 +46,12 @@ Patch208: squid-3.3.8-active-ftp-2.patch
 # http://www.squid-cache.org/Advisories/SQUID-2014_1.txt
 Patch209: squid-3.3-12677.patch
 Patch210: squid-3.3.13-dos.patch
+Patch211: squid-3.3.8-incorrect-ssl.patch
+Patch212: squid-3.3.8-fd-leaks.patch
+Patch213: squid-3.3.8-vary-headers.patch
+Patch214: squid-3.3.8-incorrect-cert.patch
+Patch215: squid-3.3.8-segfault-reboot.patch
+Patch216: squid-3.3.8-le-looping.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -101,7 +108,7 @@ The squid-sysvinit contains SysV initscritps support.
 %setup -q
 
 # Upstream patches
-#patch001 -p0
+#%patch001 -p1 -b 
 
 # Backported patches
 #patch101 -p1 -b .mem_node
@@ -117,6 +124,12 @@ The squid-sysvinit contains SysV initscritps support.
 %patch208 -p1 -b .active-ftp-2
 %patch209 -p0
 %patch210 -p0
+%patch211 -p1 -b .incorrect-ssl
+%patch212 -p1 -b .fd-leaks
+%patch213 -p1 -b .vary-headers
+%patch214 -p1 -b .incorrect-cert
+%patch215 -p1 -b .segfault-reboot
+%patch216 -p0 -b .le-looping
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -132,7 +145,7 @@ LDFLAGS="$RPM_LD_FLAGS -pie -Wl,-z,relro -Wl,-z,now"
    --disable-strict-error-checking \
    --exec_prefix=/usr \
    --libexecdir=%{_libdir}/squid \
-   --localstatedir=/var \
+   --localstatedir=%{_var} \
    --datadir=%{_datadir}/squid \
    --sysconfdir=%{_sysconfdir}/squid \
    --with-logdir='$(localstatedir)/log/squid' \
@@ -206,6 +219,8 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/NetworkManager/dispatcher.d
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/squid
+mkdir -p $RPM_BUILD_ROOT%{_prefix}/lib/firewalld/services
+
 install -m 755 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/squid
 install -m 644 %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/squid
 install -m 644 %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/squid
@@ -214,11 +229,21 @@ install -m 644 %{SOURCE7} $RPM_BUILD_ROOT%{_unitdir}
 install -m 755 %{SOURCE8} $RPM_BUILD_ROOT%{_libexecdir}/squid
 install -m 644 $RPM_BUILD_ROOT/squid.httpd.tmp $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/squid.conf
 install -m 644 %{SOURCE6} $RPM_BUILD_ROOT%{_sysconfdir}/NetworkManager/dispatcher.d/20-squid
-mkdir -p $RPM_BUILD_ROOT/var/log/squid
-mkdir -p $RPM_BUILD_ROOT/var/spool/squid
+install -m 644 %{SOURCE9} $RPM_BUILD_ROOT%{_prefix}/lib/firewalld/services
+mkdir -p $RPM_BUILD_ROOT%{_var}/log/squid
+mkdir -p $RPM_BUILD_ROOT%{_var}/spool/squid
+mkdir -p $RPM_BUILD_ROOT%{_var}/run/squid
 chmod 644 contrib/url-normalizer.pl contrib/rredir.* contrib/user-agents.pl
 iconv -f ISO88591 -t UTF8 ChangeLog -o ChangeLog.tmp
 mv -f ChangeLog.tmp ChangeLog
+
+# install /usr/lib/tmpfiles.d/squid.conf
+mkdir -p ${RPM_BUILD_ROOT}%{_tmpfilesdir}
+cat > ${RPM_BUILD_ROOT}%{_tmpfilesdir}/squid.conf <<EOF
+# See tmpfiles.d(5) for details
+
+d /run/squid 0755 squid squid - -
+EOF
 
 # Move the MIB definition to the proper place (and name)
 mkdir -p $RPM_BUILD_ROOT/usr/share/snmp/mibs
@@ -244,8 +269,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libexecdir}/squid/cache_swap.sh
 %attr(755,root,root) %dir %{_sysconfdir}/squid
 %attr(755,root,root) %dir %{_libdir}/squid
-%attr(750,squid,squid) %dir /var/log/squid
-%attr(750,squid,squid) %dir /var/spool/squid
+%attr(750,squid,squid) %dir %{_var}/log/squid
+%attr(750,squid,squid) %dir %{_var}/spool/squid
+%attr(755,squid,squid) %dir %{_var}/run/squid
 
 %config(noreplace) %attr(644,root,root) %{_sysconfdir}/httpd/conf.d/squid.conf
 %config(noreplace) %attr(640,root,squid) %{_sysconfdir}/squid/squid.conf
@@ -254,6 +280,10 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/squid/errorpage.css
 %config(noreplace) %{_sysconfdir}/sysconfig/squid
 %config(noreplace) %{_sysconfdir}/squid/msntauth.conf
+
+# squid firewalld service file
+%config(noreplace) %attr(644,root,root) %{_prefix}/lib/firewalld/services/squid.xml
+
 # These are not noreplace because they are just sample config files
 %config %{_sysconfdir}/squid/msntauth.conf.default
 %config %{_sysconfdir}/squid/squid.conf.default
@@ -274,6 +304,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/*
 %{_libdir}/squid/*
 %{_datadir}/snmp/mibs/SQUID-MIB.txt
+%{_tmpfilesdir}/squid.conf
 
 %files sysvinit
 %attr(755,root,root) %{_sysconfdir}/rc.d/init.d/squid
@@ -321,8 +352,61 @@ fi
         /sbin/chkconfig --add squid >/dev/null 2>&1 || :
 
 %changelog
+* Wed Oct 14 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26
+- Related: #1186768 - removing patch, because of missing tests and 
+  incorrent patch
+
+* Tue Oct 13 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-25
+- Related: #1102842 - squid rpm package misses /var/run/squid needed for
+  smp mode. Squid needs write access to /var/run/squid.
+
+* Fri Oct 09 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-24
+- Related: #1102842 - squid rpm package misses /var/run/squid needed for
+  smp mode. Creation of /var/run/squid was also needed to be in SPEC file.
+
+* Tue Oct 06 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-23
+- Related: #1102842 - squid rpm package misses /var/run/squid needed for
+  smp mode. Creation of this directory was moved to tmpfiles.d conf file.
+
+* Fri Oct 02 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-22
+- Related: #1102842 - squid rpm package misses /var/run/squid needed for
+  smp mode. Creation of this directory was moved to service file.
+
+* Tue Sep 22 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-21
+- Resolves: #1263338 - squid with digest auth on big endian systems 
+  start looping
+
+* Mon Aug 10 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-20
+- Resolves: #1186768 - security issue: Nonce replay vulnerability 
+  in Digest authentication
+
+* Tue Jul 14 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-19
+- Resolves: #1225640 - squid crashes by segfault when it reboots
+
+* Thu Jun 25 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-18
+- Resolves: #1102842 - squid rpm package misses /var/run/squid needed for 
+  smp mode
+
+* Wed Jun 24 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-17
+- Resolves: #1233265 - CVE-2015-3455 squid: incorrect X509 server
+  certificate validation
+
+* Fri Jun 19 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-16
+- Resolves: #1080042 - Supply a firewalld service file with squid
+
+* Wed Jun 17 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-15
+- Resolves: #1161600 - Squid does not serve cached responses 
+  with Vary headers
+
+* Wed Jun 17 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-14
+- Resolves: #1198778 - Filedescriptor leaks on snmp
+
+* Wed Jun 17 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-13
+- Resolves: #1204375 - squid sends incorrect ssl chain breaking newer gnutls 
+  using applications
+
 * Fri Aug 29 2014 Michal Luscon <mluscon@redhat.com> - 7:3.3.8-12
-- Resolves: #1134933 - CVE-2014-3609 assertion failure in header processing
+- Resolves: #1134934 - CVE-2014-3609 assertion failure in header processing
 
 * Mon Mar 17 2014 Pavel Šimerda <psimerda@redhat.com> - 7:3.3.8-11
 - Resolves: #1074873 - CVE-2014-0128 squid: denial of service when using

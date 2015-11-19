@@ -1,0 +1,92 @@
+diff -Naurp squid-3.3.8.orig/src/ipc/TypedMsgHdr.cc squid-3.3.8/src/ipc/TypedMsgHdr.cc
+--- squid-3.3.8.orig/src/ipc/TypedMsgHdr.cc	2013-07-13 15:25:14.000000000 +0200
++++ squid-3.3.8/src/ipc/TypedMsgHdr.cc	2015-04-20 14:28:32.971000390 +0200
+@@ -167,10 +167,20 @@ Ipc::TypedMsgHdr::putRaw(const void *raw
+     }
+ }
+ 
++bool
++Ipc::TypedMsgHdr::hasFd() const
++{
++	struct cmsghdr *cmsg = CMSG_FIRSTHDR(this);
++	return cmsg &&
++	    cmsg->cmsg_level == SOL_SOCKET &&
++	    cmsg->cmsg_type == SCM_RIGHTS;
++}
++
+ void
+ Ipc::TypedMsgHdr::putFd(int fd)
+ {
+     Must(fd >= 0);
++    Must(!hasFd());
+     allocControl();
+ 
+     const int fdCount = 1;
+@@ -183,12 +193,15 @@ Ipc::TypedMsgHdr::putFd(int fd)
+     int *fdStore = reinterpret_cast<int*>(CMSG_DATA(cmsg));
+     memcpy(fdStore, &fd, fdCount * sizeof(int));
+     msg_controllen = cmsg->cmsg_len;
++
++    Must(hasFd());
+ }
+ 
+ int
+ Ipc::TypedMsgHdr::getFd() const
+ {
+     Must(msg_control && msg_controllen);
++    Must(hasFd());
+ 
+     struct cmsghdr *cmsg = CMSG_FIRSTHDR(this);
+     Must(cmsg->cmsg_level == SOL_SOCKET);
+diff -Naurp squid-3.3.8.orig/src/ipc/TypedMsgHdr.h squid-3.3.8/src/ipc/TypedMsgHdr.h
+--- squid-3.3.8.orig/src/ipc/TypedMsgHdr.h	2013-07-13 15:25:14.000000000 +0200
++++ squid-3.3.8/src/ipc/TypedMsgHdr.h	2015-04-20 14:12:57.509303004 +0200
+@@ -59,8 +59,8 @@ public:
+ 
+     /* access to a "file" descriptor that can be passed between processes */
+     void putFd(int aFd); ///< stores descriptor
+-    int getFd() const; ///< returns descriptor
+-
++    int getFd() const; ///< returns stored descriptor
++    bool hasFd() const; ///< whether the message has a descriptor stored
+     /* raw, type-independent access for I/O */
+     void prepForReading(); ///< reset and provide all buffers
+     char *raw() { return reinterpret_cast<char*>(this); }
+diff -Naurp squid-3.3.8.orig/src/snmp/Inquirer.cc squid-3.3.8/src/snmp/Inquirer.cc
+--- squid-3.3.8.orig/src/snmp/Inquirer.cc	2013-07-13 15:25:14.000000000 +0200
++++ squid-3.3.8/src/snmp/Inquirer.cc	2015-04-20 14:15:12.324970907 +0200
+@@ -28,6 +28,10 @@ Snmp::Inquirer::Inquirer(const Request&
+     closer = asyncCall(49, 5, "Snmp::Inquirer::noteCommClosed",
+                        CommCbMemFunT<Inquirer, CommCloseCbParams>(this, &Inquirer::noteCommClosed));
+     comm_add_close_handler(conn->fd, closer);
++
++    // forget client FD to avoid sending it to strands that may forget to close
++    if (Request *snmpRequest = dynamic_cast<Request*>(request.getRaw()))
++	snmpRequest->fd = -1;
+ }
+ 
+ /// closes our copy of the client connection socket
+diff -Naurp squid-3.3.8.orig/src/snmp/Request.cc squid-3.3.8/src/snmp/Request.cc
+--- squid-3.3.8.orig/src/snmp/Request.cc	2013-07-13 15:25:14.000000000 +0200
++++ squid-3.3.8/src/snmp/Request.cc	2015-04-20 14:21:16.676074181 +0200
+@@ -33,7 +33,8 @@ Snmp::Request::Request(const Ipc::TypedM
+     session.unpack(msg);
+     msg.getPod(address);
+ 
+-    fd = msg.getFd();
++    // Requests from strands have FDs. Requests from Coordinator do not.
++    fd = msg.hasFd() ? msg.getFd() : -1;
+ }
+ 
+ void
+@@ -46,7 +47,9 @@ Snmp::Request::pack(Ipc::TypedMsgHdr& ms
+     session.pack(msg);
+     msg.putPod(address);
+ 
+-    msg.putFd(fd);
++    // Requests sent to Coordinator have FDs. Requests sent to strands do not.
++    if (fd >= 0)
++	msg.putFd(fd);
+ }
+ 
+ Ipc::Request::Pointer
