@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.3.8
-Release:  26%{?dist}
+Release:  26%{?dist}.3
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -52,6 +52,12 @@ Patch213: squid-3.3.8-vary-headers.patch
 Patch214: squid-3.3.8-incorrect-cert.patch
 Patch215: squid-3.3.8-segfault-reboot.patch
 Patch216: squid-3.3.8-le-looping.patch
+Patch217: squid-CVE-2016-4051.patch
+Patch218: squid-CVE-2016-4052.patch
+Patch219: squid-CVE-2016-4553.patch
+Patch220: squid-CVE-2016-4554.patch
+Patch221: squid-CVE-2016-4555.patch
+Patch222: squid-CVE-2016-4556.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -130,6 +136,12 @@ The squid-sysvinit contains SysV initscritps support.
 %patch214 -p1 -b .incorrect-cert
 %patch215 -p1 -b .segfault-reboot
 %patch216 -p0 -b .le-looping
+%patch217 -p0 -b .CVE-2016-4051
+%patch218 -p1 -b .CVE-2016-4052
+%patch219 -p0 -b .CVE-2016-4053
+%patch220 -p0 -b .CVE-2016-4054
+%patch221 -p0 -b .CVE-2016-4055
+%patch222 -p0 -b .CVE-2016-4056
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -352,6 +364,20 @@ fi
         /sbin/chkconfig --add squid >/dev/null 2>&1 || :
 
 %changelog
+* Mon May 09 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.3
+- Related: #1330576 - CVE-2016-4553 squid: Cache poisoning issue in
+  HTTP Request handling
+- Related: #1334491 - CVE-2016-4554 CVE-2016-4555 CVE-2016-4556
+  squid: various flaws
+
+* Tue May 03 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.2
+- Related: #1330576 - CVE-2016-4051 CVE-2016-4052 CVE-2016-4053 CVE-2016-4054
+  squid: various flaws
+
+* Thu Apr 28 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.1
+- Resolves: #1330576 - CVE-2016-4051 CVE-2016-4052 CVE-2016-4053 CVE-2016-4054
+  squid: various flaws
+
 * Wed Oct 14 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26
 - Related: #1186768 - removing patch, because of missing tests and 
   incorrent patch
