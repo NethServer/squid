@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.3.8
-Release:  26%{?dist}.3
+Release:  26%{?dist}.4
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -58,6 +58,7 @@ Patch219: squid-CVE-2016-4553.patch
 Patch220: squid-CVE-2016-4554.patch
 Patch221: squid-CVE-2016-4555.patch
 Patch222: squid-CVE-2016-4556.patch
+Patch223: squid-3.3.8-conf-setrlimit.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -142,6 +143,7 @@ The squid-sysvinit contains SysV initscritps support.
 %patch220 -p0 -b .CVE-2016-4054
 %patch221 -p0 -b .CVE-2016-4055
 %patch222 -p0 -b .CVE-2016-4056
+%patch223 -p1 -b .conf-setrlimit
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -364,6 +366,9 @@ fi
         /sbin/chkconfig --add squid >/dev/null 2>&1 || :
 
 %changelog
+* Thu Jun 09 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.4
+- Resolves: #1344283 - max_filedescriptors in squid.conf is ignored
+
 * Mon May 09 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.3
 - Related: #1330576 - CVE-2016-4553 squid: Cache poisoning issue in
   HTTP Request handling

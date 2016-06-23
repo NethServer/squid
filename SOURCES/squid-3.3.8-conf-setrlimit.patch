@@ -1,0 +1,44 @@
+diff --git a/configure.ac b/configure.ac
+index 1d9df60..76ca114 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -2705,6 +2705,7 @@ AC_ARG_WITH(maxfd,,
+   case ${withval} in
+     [[0-9]]*)
+       squid_filedescriptors_num=$withval
++      AC_MSG_NOTICE([forcing default of $squid_filedescriptors_num filedescriptors (user-forced)])
+       ;;
+     *)
+       AC_MSG_ERROR(--with-maxfd expects a numeric argument)
+@@ -2719,6 +2720,7 @@ AC_ARG_WITH(filedescriptors,
+   case ${withval} in
+     [[0-9]]*)
+       squid_filedescriptors_num=$withval
++      AC_MSG_NOTICE([forcing default of $squid_filedescriptors_num filedescriptors (user-forced)])
+       ;;
+     *)
+       AC_MSG_ERROR(--with-filedescriptors expects a numeric argument)
+@@ -2727,10 +2729,9 @@ AC_ARG_WITH(filedescriptors,
+ ])
+ 
+ SQUID_CHECK_DEFAULT_FD_SETSIZE
+-if test "x$squid_filedescriptors_num" = "x"; then
+-  SQUID_CHECK_MAXFD
+-else
+-  AC_MSG_NOTICE([forcing use of $squid_filedescriptors_num filedescriptors (user-forced)])
++SQUID_CHECK_MAXFD
++if test "x$squid_filedescriptors_num" != "x"; then
++  AC_MSG_NOTICE([Default number of fieldescriptors: $squid_filedescriptors_num])
+ fi
+ if test "$squid_filedescriptors_num" -lt 512 ; then
+     AC_MSG_WARN([$squid_filedescriptors_num may not be enough filedescriptors if your])
+--- a/configure
++++ b/configure
+@@ -29326,6 +29326,7 @@ for ac_func in \
+ 	setgroups \
+ 	setpgrp \
+ 	setsid \
++  setrlimit \
+ 	sigaction \
+ 	snprintf \
+ 	socketpair \
