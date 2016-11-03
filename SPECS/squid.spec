@@ -3,16 +3,16 @@
 ## % define __find_requires %{SOURCE99}
 
 Name:     squid
-Version:  3.3.8
-Release:  26%{?dist}.4
+Version:  3.5.20
+Release:  2%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
 License:  GPLv2+ and (LGPLv2+ and MIT and BSD and Public Domain)
 Group:    System Environment/Daemons
 URL:      http://www.squid-cache.org
-Source0:  http://www.squid-cache.org/Versions/v3/3.3/squid-%{version}.tar.xz
-Source1:  http://www.squid-cache.org/Versions/v3/3.3/squid-%{version}.tar.xz.asc
+Source0:  http://www.squid-cache.org/Versions/v3/3.5/squid-%{version}.tar.xz
+Source1:  http://www.squid-cache.org/Versions/v3/3.5/squid-%{version}.tar.xz.asc
 Source2:  squid.init
 Source3:  squid.logrotate
 Source4:  squid.sysconfig
@@ -20,15 +20,8 @@ Source5:  squid.pam
 Source6:  squid.nm
 Source7:  squid.service
 Source8:  cache_swap.sh
-Source9:  squid.xml
 Source98: perl-requires-squid.sh
-## Source99: filter-requires-squid.sh
-
-# Upstream patches
-#Patch001: http://www.squid-cache.org/Versions/v3/3.2/changesets/squid-3.2-11480.patch
-
-# Backported patches
-# Patch211: squid-3.3.8-incorrect-ssl.patch
+Source99: squid-migrate-conf.py
 
 # Local patches
 # Applying upstream patches first makes it less likely that local patches
@@ -38,30 +31,18 @@ Patch202: squid-3.1.0.9-location.patch
 Patch203: squid-3.0.STABLE1-perlpath.patch
 Patch204: squid-3.2.0.9-fpic.patch
 Patch205: squid-3.1.9-ltdl.patch
-Patch206: squid-3.3.4-empty-pod2man.patch
-Patch207: active-ftp.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=980511
-Patch208: squid-3.3.8-active-ftp-2.patch
-# https://bugzilla.redhat.com/show_bug.cgi?id=1074873
-# http://www.squid-cache.org/Advisories/SQUID-2014_1.txt
-Patch209: squid-3.3-12677.patch
-Patch210: squid-3.3.13-dos.patch
-Patch211: squid-3.3.8-incorrect-ssl.patch
-Patch212: squid-3.3.8-fd-leaks.patch
-Patch213: squid-3.3.8-vary-headers.patch
-Patch214: squid-3.3.8-incorrect-cert.patch
-Patch215: squid-3.3.8-segfault-reboot.patch
-Patch216: squid-3.3.8-le-looping.patch
-Patch217: squid-CVE-2016-4051.patch
-Patch218: squid-CVE-2016-4052.patch
-Patch219: squid-CVE-2016-4553.patch
-Patch220: squid-CVE-2016-4554.patch
-Patch221: squid-CVE-2016-4555.patch
-Patch222: squid-CVE-2016-4556.patch
-Patch223: squid-3.3.8-conf-setrlimit.patch
+Patch206: squid-3.3.8-active-ftp-1.patch
+Patch207: squid-3.3.8-active-ftp-2.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1265328#c23
+Patch208: squid-3.5.10-ssl-helper.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1378025
+# http://bazaar.launchpad.net/~squid/squid/3.4/revision/12713
+Patch209: squid-3.5.20-conf-casecmp.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
+Requires: squid-migration-script
 Requires(pre): shadow-utils
 Requires(post): /sbin/chkconfig
 Requires(preun): /sbin/chkconfig
@@ -81,13 +62,15 @@ BuildRequires: expat-devel libxml2-devel
 # TPROXY requires libcap, and also increases security somewhat
 BuildRequires: libcap-devel
 # eCAP support
-BuildRequires: libecap-devel
+BuildRequires: libecap-devel >= 1.0.0
 # 
 BuildRequires: libtool libtool-ltdl-devel
 # For test suite
 BuildRequires: cppunit-devel
 # DB helper requires
 BuildRequires: perl-podlators libdb-devel
+# c++ source files
+BuildRequires: gcc-c++
 
 %description
 Squid is a high-performance proxy caching server for Web clients,
@@ -111,14 +94,16 @@ Requires(postun): /sbin/service
 %description sysvinit
 The squid-sysvinit contains SysV initscritps support.
 
+%package migration-script
+Group: System Environment/Daemons
+Summary: Migration script for squid caching proxy
+
+%description migration-script
+The squid-migration-script contains scripts for squid configuration
+migration and script which prepares squid for downgrade operation.
+
 %prep
 %setup -q
-
-# Upstream patches
-#%patch001 -p1 -b 
-
-# Backported patches
-#patch101 -p1 -b .mem_node
 
 # Local patches
 %patch201 -p1 -b .config
@@ -126,24 +111,10 @@ The squid-sysvinit contains SysV initscritps support.
 %patch203 -p1 -b .perlpath
 %patch204 -p1 -b .fpic
 %patch205 -p1 -b .ltdl
-%patch206 -p1 -b .empty-pod2man
-%patch207 -p1 -b .active-ftp
-%patch208 -p1 -b .active-ftp-2
-%patch209 -p0
-%patch210 -p0
-%patch211 -p1 -b .incorrect-ssl
-%patch212 -p1 -b .fd-leaks
-%patch213 -p1 -b .vary-headers
-%patch214 -p1 -b .incorrect-cert
-%patch215 -p1 -b .segfault-reboot
-%patch216 -p0 -b .le-looping
-%patch217 -p0 -b .CVE-2016-4051
-%patch218 -p1 -b .CVE-2016-4052
-%patch219 -p0 -b .CVE-2016-4053
-%patch220 -p0 -b .CVE-2016-4054
-%patch221 -p0 -b .CVE-2016-4055
-%patch222 -p0 -b .CVE-2016-4056
-%patch223 -p1 -b .conf-setrlimit
+%patch206 -p1 -b .active-ftp-1
+%patch207 -p1 -b .active-ftp-2
+%patch208 -p1 -b .ssl-helper
+%patch209 -p1 -b .conf-casecmp
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -168,7 +139,7 @@ LDFLAGS="$RPM_LD_FLAGS -pie -Wl,-z,relro -Wl,-z,now"
    --enable-eui \
    --enable-follow-x-forwarded-for \
    --enable-auth \
-   --enable-auth-basic="DB,LDAP,MSNT,MSNT-multi-domain,NCSA,NIS,PAM,POP3,RADIUS,SASL,SMB,getpwnam" \
+   --enable-auth-basic="DB,LDAP,MSNT-multi-domain,NCSA,NIS,PAM,POP3,RADIUS,SASL,SMB,SMB_LM,getpwnam" \
    --enable-auth-ntlm="smb_lm,fake" \
    --enable-auth-digest="file,LDAP,eDirectory" \
    --enable-auth-negotiate="kerberos" \
@@ -177,7 +148,6 @@ LDFLAGS="$RPM_LD_FLAGS -pie -Wl,-z,relro -Wl,-z,now"
    --enable-cachemgr-hostname=localhost \
    --enable-delay-pools \
    --enable-epoll \
-   --enable-icap-client \
    --enable-ident-lookups \
    %ifnarch ppc64 ia64 x86_64 s390x aarch64
    --with-large-files \
@@ -185,7 +155,6 @@ LDFLAGS="$RPM_LD_FLAGS -pie -Wl,-z,relro -Wl,-z,now"
    --enable-linux-netfilter \
    --enable-removal-policies="heap,lru" \
    --enable-snmp \
-   --enable-ssl \
    --enable-ssl-crtd \
    --enable-storeio="aufs,diskd,ufs" \
    --enable-wccpv2 \
@@ -193,10 +162,11 @@ LDFLAGS="$RPM_LD_FLAGS -pie -Wl,-z,relro -Wl,-z,now"
    --enable-ecap \
    --with-aio \
    --with-default-user="squid" \
-   --with-filedescriptors=16384 \
    --with-dl \
    --with-openssl \
-   --with-pthreads
+   --with-pthreads \
+   --disable-arch-native \
+   --disable-icap-client
 
 make \
 	DEFAULT_SWAP_DIR='$(localstatedir)/spool/squid' \
@@ -204,7 +174,7 @@ make \
 
 %check
 make check
-	
+
 %install
 rm -rf $RPM_BUILD_ROOT
 make \
@@ -243,7 +213,6 @@ install -m 644 %{SOURCE7} $RPM_BUILD_ROOT%{_unitdir}
 install -m 755 %{SOURCE8} $RPM_BUILD_ROOT%{_libexecdir}/squid
 install -m 644 $RPM_BUILD_ROOT/squid.httpd.tmp $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/squid.conf
 install -m 644 %{SOURCE6} $RPM_BUILD_ROOT%{_sysconfdir}/NetworkManager/dispatcher.d/20-squid
-install -m 644 %{SOURCE9} $RPM_BUILD_ROOT%{_prefix}/lib/firewalld/services
 mkdir -p $RPM_BUILD_ROOT%{_var}/log/squid
 mkdir -p $RPM_BUILD_ROOT%{_var}/spool/squid
 mkdir -p $RPM_BUILD_ROOT%{_var}/run/squid
@@ -270,12 +239,25 @@ rm -f $RPM_BUILD_ROOT%{_sysconfdir}/squid/squid.conf.documented
 rm -f $RPM_BUILD_ROOT%{_bindir}/{RunAccel,RunCache}
 rm -f $RPM_BUILD_ROOT/squid.httpd.tmp
 
+# bug #447156
+# /usr/share/squid/errors/zh-cn and /usr/share/squid/errors/zh-tw were
+# substituted directories substituted by symlinks and RPM, can't handle
+# this change
+rm -f $RPM_BUILD_ROOT%{_prefix}/share/squid/errors/zh-tw
+rm -f $RPM_BUILD_ROOT%{_prefix}/share/squid/errors/zh-cn
+cp -R --preserve=all $RPM_BUILD_ROOT%{_prefix}/share/squid/errors/zh-hant $RPM_BUILD_ROOT%{_prefix}/share/squid/errors/zh-tw
+cp -R --preserve=all $RPM_BUILD_ROOT%{_prefix}/share/squid/errors/zh-hans $RPM_BUILD_ROOT%{_prefix}/share/squid/errors/zh-cn
+
+# squid-migration-script
+mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/squid
+install -m 755 %{SOURCE99} $RPM_BUILD_ROOT%{_bindir}
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc COPYING COPYRIGHT README ChangeLog QUICKSTART src/squid.conf.documented
+%doc COPYING README ChangeLog QUICKSTART src/squid.conf.documented
 %doc contrib/url-normalizer.pl contrib/rredir.* contrib/user-agents.pl
 
 %{_unitdir}/squid.service
@@ -293,13 +275,8 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/squid/mime.conf
 %config(noreplace) %{_sysconfdir}/squid/errorpage.css
 %config(noreplace) %{_sysconfdir}/sysconfig/squid
-%config(noreplace) %{_sysconfdir}/squid/msntauth.conf
-
-# squid firewalld service file
-%config(noreplace) %attr(644,root,root) %{_prefix}/lib/firewalld/services/squid.xml
 
 # These are not noreplace because they are just sample config files
-%config %{_sysconfdir}/squid/msntauth.conf.default
 %config %{_sysconfdir}/squid/squid.conf.default
 %config %{_sysconfdir}/squid/mime.conf.default
 %config %{_sysconfdir}/squid/errorpage.css.default
@@ -323,6 +300,10 @@ rm -rf $RPM_BUILD_ROOT
 %files sysvinit
 %attr(755,root,root) %{_sysconfdir}/rc.d/init.d/squid
 
+%files migration-script
+%defattr(-,root,root,-)
+%attr(755,root,root) %{_bindir}/squid-migrate-conf.py*
+
 %pre
 if ! getent group squid >/dev/null 2>&1; then
   /usr/sbin/groupadd -g 23 squid
@@ -343,6 +324,7 @@ done
 exit 0
 
 %post
+/usr/bin/squid-migrate-conf.py --write-changes --conf %{_sysconfdir}/squid/squid.conf &>/dev/null
 %systemd_post squid.service
 
 %preun
@@ -358,30 +340,78 @@ fi
 /usr/sbin/usermod -a -G wbpriv squid >/dev/null 2>&1 || \
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
-%triggerun --  %{name} < 7:3.2.0.9-1
-        /sbin/chkconfig --del squid >/dev/null 2>&1 || :
-        /bin/systemctl try-restart squid.service >/dev/null 2>&1 || :
-
-%triggerpostun -n %{name}-sysvinit -- %{name} < 7:3.2.0.9-1
-        /sbin/chkconfig --add squid >/dev/null 2>&1 || :
-
 %changelog
-* Thu Jun 09 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.4
-- Resolves: #1344283 - max_filedescriptors in squid.conf is ignored
+* Wed Sep 21 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-2
+- Resolves: #1378025 - host_verify_strict only accepts lowercase arguments
 
-* Mon May 09 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.3
-- Related: #1330576 - CVE-2016-4553 squid: Cache poisoning issue in
+* Tue Aug 09 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-1
+- Resolves: #1273942 - Rebase squid to latest mature 3.5 version (3.5.20)
+
+* Mon Aug 08 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-9
+- Related: #1349775 - Provide migration tools needed due to rebase
+  to squid 3.5 as a separate sub-package
+
+* Mon Aug 01 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-8
+- Related: #1349775 - Provide migration tools needed due to rebase
+  to squid 3.5 as a separate sub-package
+
+* Mon Aug 01 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-7
+- Related: #1349775 - Provide migration tools needed due to rebase
+  to squid 3.5 as a separate sub-package
+
+* Wed Jul 27 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-6
+- Related: #1349775 - Provide migration tools needed due to rebase
+  to squid 3.5 as a separate sub-package
+
+* Tue Jul 26 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-5
+- Related: #1349775 - Provide migration tools needed due to rebase
+  to squid 3.5 as a separate sub-package
+
+* Tue Jul 19 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-4
+- Resolves: #1349775 - Provide migration tools needed due to rebase
+  to squid 3.5 as a separate sub-package
+
+* Tue Jun 14 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-3
+- Resolves: #1330186 - digest doesn't properly work with squid 3.3 on CentOS 7
+
+* Tue Jun 14 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-2
+- Resolves: #1336387 - Squid send wrong respond for GET-request following
+  Range-GET request
+
+* Wed Jun 08 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.10-1
+- Resolves: #1273942 - Rebase squid to latest mature 3.5 version (3.5.10)
+- Resolves: #1322770 - CVE-2016-2569 CVE-2016-2570 CVE-2016-2571 CVE-2016-2572
+  CVE-2016-3948 squid: various flaws
+- Resolves: #1254016 - IPv4 fallback is not working when connecting
+  to a dualstack host with non-functional IPv6
+- Resolves: #1254018 - should BuildRequire: g++
+- Resolves: #1262456 - Squid delays on FQDNs that don't contains AAAA record
+- Resolves: #1336940 - Disable squid systemd unit start/stop timeouts
+- Resolves: #1344197 - /usr/lib/firewalld/services/squid.xml conflicts between
+  attempted installs of squid-7:3.3.8-31.el7.x86_64 and
+  firewalld-0.4.2-1.el7.noarch
+- Resolves: #1299972 - squid file descriptor limit hardcoded to 16384 via 
+  compile option in spec file
+
+* Wed Jun 08 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-31
+- Resolves: #1283078 - max_filedescriptors in squid.conf is ignored
+
+* Mon May 09 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-30
+- Related: #1334509 - CVE-2016-4553 squid: Cache poisoning issue in
   HTTP Request handling
-- Related: #1334491 - CVE-2016-4554 CVE-2016-4555 CVE-2016-4556
+- Related: #1334492 - CVE-2016-4554 CVE-2016-4555 CVE-2016-4556 
   squid: various flaws
 
-* Tue May 03 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.2
-- Related: #1330576 - CVE-2016-4051 CVE-2016-4052 CVE-2016-4053 CVE-2016-4054
-  squid: various flaws
+* Tue May 03 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-29
+- Related: #1330577 - CVE-2016-4052 CVE-2016-4053 CVE-2016-4054 squid: multiple
+  issues in ESI processing
 
-* Thu Apr 28 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26.1
-- Resolves: #1330576 - CVE-2016-4051 CVE-2016-4052 CVE-2016-4053 CVE-2016-4054
-  squid: various flaws
+* Thu Apr 28 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-28
+- Related: #1330577 - CVE-2016-4052 CVE-2016-4053 CVE-2016-4054 squid: multiple
+  issues in ESI processing
+
+* Thu Apr 28 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-27
+- Resolves: #1330577 - CVE-2016-4051 squid: buffer overflow in cachemgr.cgi
 
 * Wed Oct 14 2015 Luboš Uhliarik <luhliari@redhat.com> - 7:3.3.8-26
 - Related: #1186768 - removing patch, because of missing tests and 
