@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  2%{?dist}
+Release:  2%{?dist}.1
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -165,8 +165,7 @@ LDFLAGS="$RPM_LD_FLAGS -pie -Wl,-z,relro -Wl,-z,now"
    --with-dl \
    --with-openssl \
    --with-pthreads \
-   --disable-arch-native \
-   --disable-icap-client
+   --disable-arch-native
 
 make \
 	DEFAULT_SWAP_DIR='$(localstatedir)/spool/squid' \
@@ -341,6 +340,9 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+* Tue Dec 20 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-2.1
+- Resolves: #1406288 - icap support has been disabled on squid 3.5.20-2.el7
+
 * Wed Sep 21 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-2
 - Resolves: #1378025 - host_verify_strict only accepts lowercase arguments
 
