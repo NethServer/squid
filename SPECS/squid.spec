@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  2%{?dist}.1
+Release:  2%{?dist}.2
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -39,6 +39,8 @@ Patch208: squid-3.5.10-ssl-helper.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1378025
 # http://bazaar.launchpad.net/~squid/squid/3.4/revision/12713
 Patch209: squid-3.5.20-conf-casecmp.patch
+# http://www.squid-cache.org/Versions/v3/3.5/changesets/SQUID-2016_11.patch
+Patch210: squid-CVE-2016-10002.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -115,6 +117,7 @@ migration and script which prepares squid for downgrade operation.
 %patch207 -p1 -b .active-ftp-2
 %patch208 -p1 -b .ssl-helper
 %patch209 -p1 -b .conf-casecmp
+%patch210 -p0 -b .CVE-2016-10002
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -340,6 +343,10 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+* Fri Jan 13 2017 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-2.2
+- Resolves: #1412735 - CVE-2016-10002 squid: Information disclosure in HTTP
+  request processing
+
 * Tue Dec 20 2016 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-2.1
 - Resolves: #1406288 - icap support has been disabled on squid 3.5.20-2.el7
 
