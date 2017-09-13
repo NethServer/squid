@@ -2,6 +2,14 @@
 
 case "$2" in
         up|down|vpn-up|vpn-down)
-                /bin/systemctl reload squid.service || :
+                n=20
+                while /usr/sbin/squid -k check >/dev/null 2>&1 && [ ! -f /var/run/squid.pid ] && [ $n -gt 0 ]; do
+                    sleep 1
+                    n=`expr $n - 1`
+                done
+
+                if [ -f /var/run/squid.pid ]; then
+                        /bin/systemctl reload squid.service || :
+                fi
                 ;;
 esac
