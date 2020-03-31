@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  12%{?dist}.1
+Release:  15%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -49,7 +49,23 @@ Patch212: squid-3.5.20-man-typos.patch
 Patch213: squid-3.5.20-man-see-also.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1620546
 Patch214: squid-3.5.20-empty-cname.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1690551
+Patch215: squid-3.5.20-cache-peer-tolower.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1680022
+Patch216: squid-3.5.20-https-packet-size.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1717430
+Patch217: squid-3.5.20-mem-usage-out-of-fd.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1676420
+Patch218: squid-3.5.20-cache-siblings-gw.patch
 
+
+# Security Fixes:
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1727744
+Patch500: squid-3.5.20-CVE-2019-13345.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1582301
+Patch501: squid-3.5.20-CVE-2018-1000024.patch
+Patch502: squid-3.5.20-CVE-2018-1000027.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -131,6 +147,15 @@ migration and script which prepares squid for downgrade operation.
 %patch212 -p1 -b .man-see-also
 %patch213 -p1 -b .man-typos
 %patch214 -p1 -b .empty-cname
+%patch215 -p1 -b .cache-peer-tolower
+%patch216 -p1 -b .https-packet-size
+%patch217 -p1 -b .mem-usage-out-of-fd
+%patch218 -p1 -b .cache-siblings-gw
+
+# security fixes
+%patch500 -p1 -b .CVE-2019-13345
+%patch501 -p1 -b .CVE-2018-1000024
+%patch502 -p1 -b .CVE-2018-1000027
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1471140
 # Patch in the vendor documentation and used different location for documentation
@@ -360,8 +385,19 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
-* Mon Dec 10 2018 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-12.1
-- Resolves: #1657638 - migration of upstream squid bug 4007
+* Thu Jul 25 2019 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-15
+- Resolves: #1690551 - Squid cache_peer DNS lookup failed when not all lower
+  case
+- Resolves: #1680022 - squid can't display download/upload packet size for HTTPS
+  sites
+- Resolves: #1717430 - Excessive memory usage when running out of descriptors
+- Resolves: #1676420 - Cache siblings return wrongly cached gateway timeouts
+- Resolves: #1729435 - CVE-2019-13345 squid: XSS via user_name or auth parameter
+  in cachemgr.cgi
+- Resolves: #1582301 - CVE-2018-1000024 CVE-2018-1000027 squid: various flaws
+
+* Thu Dec 06 2018 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-13
+- Resolves: #1620546 - migration of upstream squid
 
 * Mon Oct 02 2017 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-12
 - Resolves: #1471140 - Missing detailed configuration file
