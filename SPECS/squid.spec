@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  15%{?dist}
+Release:  15%{?dist}.1
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -66,6 +66,12 @@ Patch500: squid-3.5.20-CVE-2019-13345.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1582301
 Patch501: squid-3.5.20-CVE-2018-1000024.patch
 Patch502: squid-3.5.20-CVE-2018-1000027.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1828361
+Patch503: squid-3.5.20-CVE-2020-11945.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1828362
+Patch504: squid-3.5.20-CVE-2019-12519.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1829772
+Patch505: squid-3.5.20-CVE-2019-12525.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -156,6 +162,9 @@ migration and script which prepares squid for downgrade operation.
 %patch500 -p1 -b .CVE-2019-13345
 %patch501 -p1 -b .CVE-2018-1000024
 %patch502 -p1 -b .CVE-2018-1000027
+%patch503 -p1 -b .CVE-2020-11945
+%patch504 -p1 -b .CVE-2019-12519
+%patch505 -p1 -b .CVE-2019-12525
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1471140
 # Patch in the vendor documentation and used different location for documentation
@@ -385,6 +394,14 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+* Tue Apr 28 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-15.1
+- Resolves: #1828359 - CVE-2020-11945 squid: improper access restriction upon
+  Digest Authentication nonce replay could lead to remote code execution
+- Resolves: #1828360 - CVE-2019-12519 squid: improper check for new member in
+  ESIExpression::Evaluate allows for stack buffer overflow
+- Resolves: #1829772 - CVE-2019-12525 squid: parsing of header
+  Proxy-Authentication leads to memory corruption
+
 * Thu Jul 25 2019 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-15
 - Resolves: #1690551 - Squid cache_peer DNS lookup failed when not all lower
   case
