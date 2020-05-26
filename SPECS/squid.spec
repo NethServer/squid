@@ -47,6 +47,32 @@ Patch211: squid-3.5.20-tunnel-sigsegv.patch
 Patch212: squid-3.5.20-man-typos.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1290404
 Patch213: squid-3.5.20-man-see-also.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1620546
+Patch214: squid-3.5.20-empty-cname.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1690551
+Patch215: squid-3.5.20-cache-peer-tolower.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1680022
+Patch216: squid-3.5.20-https-packet-size.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1717430
+Patch217: squid-3.5.20-mem-usage-out-of-fd.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1676420
+Patch218: squid-3.5.20-cache-siblings-gw.patch
+
+
+# Security Fixes:
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1727744
+Patch500: squid-3.5.20-CVE-2019-13345.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1582301
+Patch501: squid-3.5.20-CVE-2018-1000024.patch
+Patch502: squid-3.5.20-CVE-2018-1000027.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1828361
+Patch503: squid-3.5.20-CVE-2020-11945.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1828362
+Patch504: squid-3.5.20-CVE-2019-12519.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1829772
+Patch505: squid-3.5.20-CVE-2019-12525.patch
+
 # nethserver - SSL forgery
 Patch1001: squid-3.5.20-ssl-forgery.patch
 
@@ -129,7 +155,25 @@ migration and script which prepares squid for downgrade operation.
 %patch211 -p1 -b .tunnel-sigsegv
 %patch212 -p1 -b .man-see-also
 %patch213 -p1 -b .man-typos
+%patch214 -p1 -b .empty-cname
+%patch215 -p1 -b .cache-peer-tolower
+%patch216 -p1 -b .https-packet-size
+%patch217 -p1 -b .mem-usage-out-of-fd
+%patch218 -p1 -b .cache-siblings-gw
+
+# security fixes
+%patch500 -p1 -b .CVE-2019-13345
+%patch501 -p1 -b .CVE-2018-1000024
+%patch502 -p1 -b .CVE-2018-1000027
+%patch503 -p1 -b .CVE-2020-11945
+%patch504 -p1 -b .CVE-2019-12519
+%patch505 -p1 -b .CVE-2019-12525
+
 %patch1001 -p1 -b .ssl-forgery
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1471140
+# Patch in the vendor documentation and used different location for documentation
+sed -i 's|@SYSCONFDIR@/squid.conf.documented|%{_docdir}/squid-%{version}/squid.conf.documented|' src/squid.8.in
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -158,7 +202,7 @@ LDFLAGS="$RPM_LD_FLAGS -pie -Wl,-z,relro -Wl,-z,now"
    --enable-auth-ntlm="smb_lm,fake" \
    --enable-auth-digest="file,LDAP,eDirectory" \
    --enable-auth-negotiate="kerberos" \
-   --enable-external-acl-helpers="file_userip,LDAP_group,time_quota,session,unix_group,wbinfo_group" \
+   --enable-external-acl-helpers="file_userip,LDAP_group,time_quota,session,unix_group,wbinfo_group,kerberos_ldap_group" \
    --enable-cache-digests \
    --enable-cachemgr-hostname=localhost \
    --enable-delay-pools \
@@ -355,6 +399,34 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+* Tue Apr 28 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-15.1
+- Resolves: #1828359 - CVE-2020-11945 squid: improper access restriction upon
+  Digest Authentication nonce replay could lead to remote code execution
+- Resolves: #1828360 - CVE-2019-12519 squid: improper check for new member in
+  ESIExpression::Evaluate allows for stack buffer overflow
+- Resolves: #1829772 - CVE-2019-12525 squid: parsing of header
+  Proxy-Authentication leads to memory corruption
+
+* Thu Jul 25 2019 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-15
+- Resolves: #1690551 - Squid cache_peer DNS lookup failed when not all lower
+  case
+- Resolves: #1680022 - squid can't display download/upload packet size for HTTPS
+  sites
+- Resolves: #1717430 - Excessive memory usage when running out of descriptors
+- Resolves: #1676420 - Cache siblings return wrongly cached gateway timeouts
+- Resolves: #1729435 - CVE-2019-13345 squid: XSS via user_name or auth parameter
+  in cachemgr.cgi
+- Resolves: #1582301 - CVE-2018-1000024 CVE-2018-1000027 squid: various flaws
+
+* Thu Dec 06 2018 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-13
+- Resolves: #1620546 - migration of upstream squid
+
+* Mon Oct 02 2017 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-12
+- Resolves: #1471140 - Missing detailed configuration file
+
+* Mon Oct 02 2017 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-11
+- Resolves: #1452200 - Include kerberos_ldap_group helper in squid
+
 * Wed Sep 13 2017 Filippo Carletti <filippo.carletti@nethesis.it> - 7:3.5.20-999
 - Disable host header forgery checks
 
