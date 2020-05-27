@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  999%{?dist}
+Release:  9991%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -399,6 +399,9 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+* Tue May 26 2020 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 7:3.5.20-9991.1
+- Rebase on upstream 3.5.20-15
+
 * Tue Apr 28 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-15.1
 - Resolves: #1828359 - CVE-2020-11945 squid: improper access restriction upon
   Digest Authentication nonce replay could lead to remote code execution
