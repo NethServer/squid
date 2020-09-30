@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  15%{?dist}.1
+Release:  17%{?dist}.4
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -66,12 +66,24 @@ Patch500: squid-3.5.20-CVE-2019-13345.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1582301
 Patch501: squid-3.5.20-CVE-2018-1000024.patch
 Patch502: squid-3.5.20-CVE-2018-1000027.patch
+Patch503: squid-3.5.20-CVE-2019-12525.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1828361
-Patch503: squid-3.5.20-CVE-2020-11945.patch
+Patch504: squid-3.5.20-CVE-2020-11945.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1828362
-Patch504: squid-3.5.20-CVE-2019-12519.patch
-# https://bugzilla.redhat.com/show_bug.cgi?id=1829772
-Patch505: squid-3.5.20-CVE-2019-12525.patch
+Patch505: squid-3.5.20-CVE-2019-12519.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1798540
+# https://bugzilla.redhat.com/show_bug.cgi?id=1798552
+Patch506: squid-3.5.20-CVE-2020-8449-and-8450.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1852550
+Patch507: squid-3.5.20-CVE-2020-15049.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1802517
+Patch508: squid-3.5.20-CVE-2019-12528.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1871705
+Patch509: squid-3.5.20-CVE-2020-24606.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1871700
+Patch510: squid-3.5.20-CVE-2020-15810.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1871702
+Patch511: squid-3.5.20-CVE-2020-15811.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -162,9 +174,15 @@ migration and script which prepares squid for downgrade operation.
 %patch500 -p1 -b .CVE-2019-13345
 %patch501 -p1 -b .CVE-2018-1000024
 %patch502 -p1 -b .CVE-2018-1000027
-%patch503 -p1 -b .CVE-2020-11945
-%patch504 -p1 -b .CVE-2019-12519
-%patch505 -p1 -b .CVE-2019-12525
+%patch503 -p1 -b .CVE-2019-12525
+%patch504 -p1 -b .CVE-2020-11945
+%patch505 -p1 -b .CVE-2019-12519
+%patch506 -p1 -b .CVE-2020-8449-and-8450
+%patch507 -p1 -b .CVE-2020-15049
+%patch508 -p1 -b .CVE-2019-12528
+%patch509 -p1 -b .CVE-2020-24606
+%patch510 -p1 -b .CVE-2020-15810
+%patch511 -p1 -b .CVE-2020-15811
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1471140
 # Patch in the vendor documentation and used different location for documentation
@@ -394,12 +412,32 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
-* Tue Apr 28 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-15.1
-- Resolves: #1828359 - CVE-2020-11945 squid: improper access restriction upon
+* Fri Aug 28 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.4
+- Resolves: #1872349 - CVE-2020-24606 squid: Improper Input Validation could
+  result in a DoS
+- Resolves: #1872327 - CVE-2020-15810 squid: HTTP Request Smuggling could
+  result in cache poisoning
+- Resolves: #1872342 - CVE-2020-15811 squid: HTTP Request Splitting could
+  result in cache poisoning
+
+* Fri Jul 31 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.2
+- Resolves: #1802516 - CVE-2020-8449 squid: Improper input validation issues
+  in HTTP Request processing
+- Resolves: #1802515 - CVE-2020-8450 squid: Buffer overflow in a Squid acting
+  as reverse-proxy
+- Resolves: #1853129 - CVE-2020-15049 squid: request smuggling and poisoning
+  attack against the HTTP cache
+- Resolves: #1802517 - CVE-2019-12528 squid: Information Disclosure issue in
+  FTP Gateway
+
+* Tue Apr 28 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-17
+- Resolves: #1828361 - CVE-2020-11945 squid: improper access restriction upon
   Digest Authentication nonce replay could lead to remote code execution
-- Resolves: #1828360 - CVE-2019-12519 squid: improper check for new member in
-  ESIExpression::Evaluate allows for stack buffer overflow
-- Resolves: #1829772 - CVE-2019-12525 squid: parsing of header
+- Resolves: #1828362 - CVE-2019-12519 squid: improper check for new member in
+  ESIExpression::Evaluate allows for stack buffer overflow [rhel
+
+* Fri Mar 27 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-16
+- Resolves: #1738582 - CVE-2019-12525 squid: parsing of header 
   Proxy-Authentication leads to memory corruption
 
 * Thu Jul 25 2019 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-15
