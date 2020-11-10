@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  17%{?dist}.4
+Release:  17%{?dist}.5
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -62,6 +62,8 @@ Patch218: squid-3.5.20-cache-siblings-gw.patch
 # Security Fixes:
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1727744
+# Regression caused by original patch fixed -
+# https://bugzilla.redhat.com/show_bug.cgi?id=1890581
 Patch500: squid-3.5.20-CVE-2019-13345.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1582301
 Patch501: squid-3.5.20-CVE-2018-1000024.patch
@@ -412,6 +414,10 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+* Mon Oct 26 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.5
+- Resolves: #1890581 - Fix for CVE 2019-13345 breaks authentication in
+  cachemgr.cgi
+
 * Fri Aug 28 2020 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.4
 - Resolves: #1872349 - CVE-2020-24606 squid: Improper Input Validation could
   result in a DoS
