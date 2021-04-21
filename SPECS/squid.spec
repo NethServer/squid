@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  9991%{?dist}
+Release:  9992%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -422,6 +422,9 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+
+* Wed Apr 21 2021 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 7:3.5.20-9992.1
+- Rebase on upstream 3.5.20-17.6 - NethServer/dev#6493
 
 * Wed Mar 31 2021 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.6
 - Resolves: #1944256 - CVE-2020-25097 squid: improper input validation may allow
