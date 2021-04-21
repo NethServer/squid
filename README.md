@@ -10,6 +10,7 @@ git remote add centos https://git.centos.org/rpms/squid.git
 ## Build
 
 ```
+cp SPECS/squid.spec SOURCES/squid.spec
 cd SOURCES
-make-rpms ../SPECS/squid.spec
+makerpms squid.spec
 ```
