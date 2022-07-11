@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  17%{?dist}.6
+Release:  17%{?dist}.7
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -88,6 +88,8 @@ Patch510: squid-3.5.20-CVE-2020-15810.patch
 Patch511: squid-3.5.20-CVE-2020-15811.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1939925
 Patch512: squid-3.5.20-CVE-2020-25097.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=2100721
+Patch513: squid-3.5.20-CVE-2021-46784.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: bash >= 2.0
@@ -188,6 +190,7 @@ migration and script which prepares squid for downgrade operation.
 %patch510 -p1 -b .CVE-2020-15810
 %patch511 -p1 -b .CVE-2020-15811
 %patch512 -p1 -b .CVE-2020-25097
+%patch513 -p1 -b .CVE-2021-46784
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1471140
 # Patch in the vendor documentation and used different location for documentation
@@ -417,6 +420,10 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+* Tue Jun 28 2022 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.7
+- Resolves: #2100778 - CVE-2021-46784 squid: DoS when processing gopher server
+  responses
+
 * Wed Mar 31 2021 Lubos Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.6
 - Resolves: #1944256 - CVE-2020-25097 squid: improper input validation may allow
   a trusted client to perform HTTP Request Smuggling
