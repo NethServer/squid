@@ -88,6 +88,10 @@ Patch510: squid-3.5.20-CVE-2020-15810.patch
 Patch511: squid-3.5.20-CVE-2020-15811.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1939925
 Patch512: squid-3.5.20-CVE-2020-25097.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=2100721
+Patch513: squid-3.5.20-CVE-2021-46784.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=2129771
+Patch514: squid-3.5.20-CVE-2022-41318.patch
 
 # nethserver - SSL forgery
 Patch1001: squid-3.5.20-ssl-forgery.patch
@@ -191,6 +195,8 @@ migration and script which prepares squid for downgrade operation.
 %patch510 -p1 -b .CVE-2020-15810
 %patch511 -p1 -b .CVE-2020-15811
 %patch512 -p1 -b .CVE-2020-25097
+%patch513 -p1 -b .CVE-2021-46784
+%patch514 -p1 -b .CVE-2022-41318
 
 %patch1001 -p1 -b .ssl-forgery
 
@@ -422,6 +428,14 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+
+* Wed Sep 28 2022 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.8
+- Resolves: #2130254 - CVE-2022-41318 squid: buffer-over-read in SSPI and SMB
+  authentication
+
+* Tue Jun 28 2022 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.7
+- Resolves: #2100778 - CVE-2021-46784 squid: DoS when processing gopher server
+  responses
 
 * Wed Apr 21 2021 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 7:3.5.20-9992.1
 - Rebase on upstream 3.5.20-17.6 - NethServer/dev#6493
