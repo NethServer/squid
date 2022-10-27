@@ -4,7 +4,7 @@
 
 Name:     squid
 Version:  3.5.20
-Release:  9992%{?dist}
+Release:  9993%{?dist}
 Summary:  The Squid proxy caching server
 Epoch:    7
 # See CREDITS for breakdown of non GPLv2+ code
@@ -428,6 +428,9 @@ fi
     chgrp squid /var/cache/samba/winbindd_privileged >/dev/null 2>&1 || :
 
 %changelog
+
+* Thu Oct 27 2022 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 7:3.5.20-9993
+- Rebase on upstream 3.5.20-20_9.8 - NethServer/dev#6715
 
 * Wed Sep 28 2022 Luboš Uhliarik <luhliari@redhat.com> - 7:3.5.20-17.8
 - Resolves: #2130254 - CVE-2022-41318 squid: buffer-over-read in SSPI and SMB
